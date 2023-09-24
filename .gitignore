@@ -1,5 +1,6 @@
-# my own notes
+# project stuff to exclude
 notes/
+data/
 
 
 # Byte-compiled / optimized / DLL files
