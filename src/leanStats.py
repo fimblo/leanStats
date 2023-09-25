@@ -42,14 +42,7 @@ def extract_ticket_timestamps(file_path):
     cycletime_in_days   = np.ceil(total_seconds / (24 * 3600))
     result['cycletime'] = cycletime_in_days.astype(int)
 
-    # Convert to desired list of lists format
-    result_list = result[['Key',
-                          'timestamp_start',
-                          'timestamp_end',
-                          'cycletime']].values.tolist()
-
-
-    return result_list
+    return result
 
 
 if __name__ == "__main__":
@@ -57,9 +50,15 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please provide a file path as an argument.")
         sys.exit(1)
-    
     file_path = sys.argv[1]
-    #read_and_output_csv(file_path)
-    tickets_data = extract_ticket_timestamps(file_path)
+
+    dataframe = extract_ticket_timestamps(file_path)
+
+    
+    tickets_data = dataframe[['Key',
+                              'timestamp_start',
+                              'timestamp_end',
+                              'cycletime']].values.tolist()
+
     pprint(tickets_data)
 
