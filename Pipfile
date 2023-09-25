@@ -1,3 +1,4 @@
+# -*- mode: python -*-
 [[source]]
 url = "https://pypi.org/simple"
 verify_ssl = true
@@ -18,5 +19,6 @@ python_version = "3.10"
 leanStats = "python src/leanStats.py"
 test = "pytest tests"
 
-[tool]
-pytest = {ini_options = { pythonpath = "src" }, testpaths = ["tests"]}
+[tool.pytest]
+testpaths = ["tests"]
+

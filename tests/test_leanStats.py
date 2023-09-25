@@ -1,32 +1,59 @@
-import os
-from io import StringIO
-import sys
 import pytest
 import pandas as pd
-# This allows us to import the main script functions
+from io import StringIO
+import sys
+import os
+
+from leanStats import extract_ticket_timestamps, calculate_cycletime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-#sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.leanStats import read_and_output_csv
 
-def test_read_and_output_csv(capfd):
-    """Test reading a CSV and outputting to stdout."""
-    
-    # Using a mock CSV for testing
-    mock_csv = "tests/simple-test-data.csv"
-    
-    read_and_output_csv(mock_csv)
-    
-    # Capture the stdout output
-    captured = capfd.readouterr().out.strip()
 
-    # Load the original CSV to a DataFrame
-    original_data = pd.read_csv(mock_csv)
-    
-    # Convert the captured stdout back to a DataFrame
-    output_data = pd.read_csv(StringIO(captured))
+@pytest.fixture
+def sample_data_time():
+    data = """Key,Status Transition.date,Status Transition.to
+TICKET-1,15/09/2023 00:01:00,IN PROGRESS
+TICKET-1,17/09/2023 00:02:00,DONE
+TICKET-2,16/09/2023 00:01:00,IN PROGRESS
+TICKET-2,20/09/2023 00:02:00,DONE
+"""
+    return StringIO(data)
+@pytest.fixture
+def sample_data_date():
+    data = """Key,Status Transition.date,Status Transition.to
+TICKET-1,15/09/2023,IN PROGRESS
+TICKET-1,17/09/2023,DONE
+TICKET-2,16/09/2023,IN PROGRESS
+TICKET-2,20/09/2023,DONE
+"""
+    return StringIO(data)
 
-    # Check if the dataframes are the same
-    pd.testing.assert_frame_equal(original_data, output_data)
+def test_extract_ticket_datestamps(sample_data_date):
+    df = extract_ticket_timestamps(sample_data_date)
 
-if __name__ == "__main__":
-    pytest.main()
+    assert len(df) == 2
+    assert df.iloc[0]['Key'] == 'TICKET-1'
+    assert df.iloc[0]['timestamp_start'].strftime('%Y-%m-%d') == '2023-09-15'
+    assert df.iloc[0]['timestamp_end'].strftime('%Y-%m-%d') == '2023-09-17'
+    assert df.iloc[1]['Key'] == 'TICKET-2'
+    assert df.iloc[1]['timestamp_start'].strftime('%Y-%m-%d') == '2023-09-16'
+    assert df.iloc[1]['timestamp_end'].strftime('%Y-%m-%d') == '2023-09-20'
+
+def test_extract_ticket_timestamps(sample_data_time):
+    df = extract_ticket_timestamps(sample_data_time)
+
+    assert len(df) == 2
+    assert df.iloc[0]['Key'] == 'TICKET-1'
+    assert df.iloc[0]['timestamp_start'].strftime('%Y-%m-%d %H:%M:%S') == '2023-09-15 00:01:00'
+    assert df.iloc[0]['timestamp_end'].strftime('%Y-%m-%d %H:%M:%S') == '2023-09-17 00:02:00'
+    assert df.iloc[1]['Key'] == 'TICKET-2'
+    assert df.iloc[1]['timestamp_start'].strftime('%Y-%m-%d %H:%M:%S') == '2023-09-16 00:01:00'
+    assert df.iloc[1]['timestamp_end'].strftime('%Y-%m-%d %H:%M:%S') == '2023-09-20 00:02:00'
+
+def test_calculate_cycletime(sample_data_time):
+    df = extract_ticket_timestamps(sample_data_time)
+    df = calculate_cycletime(df)
+
+    # we always round cycle time up. 
+    assert len(df) == 2
+    assert df.iloc[0]['cycletime'] == 3  # 3 days from '2023-09-15' to '2023-09-17 + 1 minute'
+    assert df.iloc[1]['cycletime'] == 5  # 5 days from '2023-09-16' to '2023-09-20 + 1 minute'
