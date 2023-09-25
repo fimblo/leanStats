@@ -1,7 +1,19 @@
 * leanStats Project
 
 ** Description
-This is the leanStats project, which computes lean metrics on ticket data.
+This is the leanStats project, which computes lean metrics on Kanban
+ticket data.
+
+I'm still messing around with the code, but ultimately I'm hoping to:
+- present cycletime and throughput data with a N-day lookback window
+- show graphs, like:
+  - a simple cycle-time/throughput chart
+  - a cycle-time scatterplot
+  - a throughput and cycle time histogram
+  - ... and that kind of thing.
+
+Currently, I output throughput, p50 and p85 cycle-time with a 7 day
+look-back window in the terminal.
 
 ** Prerequisites
 - Python 3.x
@@ -15,31 +27,33 @@ git clone git@github.com:fimblo/leanStats.git
 cd leanStats
 #+END_SRC
 
-*** Set Up the Python Environment with pipenv
+*** Set Up the Python Environment
 
 To manage dependencies and virtual environments, we use `pipenv`.
 
-If you haven't installed pipenv yet, you can do so with pip:
-
 #+BEGIN_SRC bash
-pip install pipenv
+  # install pipenv
+  pip install pipenv
+
+  # create virtual environment and install all dependencies
+  pipenv install
+
+  # update PYTHONPATH
+  cat<<EOF> .env
+  PYTHONPATH=src:$PYTHONPATH
+  EOF
 #+END_SRC
 
-Now, set up the environment for this project:
-
-#+BEGIN_SRC bash
-pipenv install
-#+END_SRC
-
-This command will create a virtual environment and install all
-dependencies listed in the `Pipfile`.
+This will create a virtual environment and install all dependencies
+listed in the `Pipfile`. The `.env` file contains environment
+variables, and is read by pipenv upon start.
 
 ** Running leanStats
 
 With everything set up, you can run leanStats using:
 
 #+BEGIN_SRC bash
-pipenv run leanStats -i sample.csv
+pipenv run leanStats -i data/sample.csv
 #+END_SRC
 
 This will output something like:
@@ -54,6 +68,20 @@ PROJ-001|2023-08-15 06:39:14|2023-08-20 07:39:21|6|6|6|1
 #+end_example
 
 Not pretty, but it's a work in progress :)
+
+*** Expectations on data csv
+
+Currently, the required fields in the CSV file are:
+- =Key=: The unique id of the ticket.
+- =Status Transition.to=: The target status of the ticket.
+- =Status Transition.date= The datetime when the ticket entered a status (dd/mm/yy HH:MM:SS)
+
+For example, if a ticket with id =PRJ-001= entered the Done lane on the 25th of September, exactly at 10:27pm, then the fields above would be:
+- =Key=: PRJ-001
+- =Status Transition.to=: "Done"
+- =Status Transition.date= "25/09/2023 22:27:00"
+
+All other fields are ignored.
 
 ** Testing
 
