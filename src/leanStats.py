@@ -37,7 +37,33 @@ def calculate_cycletime(dataframe):
 
     return df_copy
 
+def compute_metrics(dataframe):
+    # Sort dataframe by 'timestamp_end'
+    dataframe = dataframe.sort_values(by='timestamp_end')
 
+    # Initialize new columns
+    dataframe['median_cycletime'] = np.nan
+    dataframe['p85_cycletime'] = np.nan
+    dataframe['throughput'] = np.nan
+
+    # For each ticket, compute metrics over a 7-day lookback window
+    for idx, row in dataframe.iterrows():
+        lookback_start = row['timestamp_end'] - pd.Timedelta(days=7)
+        lookback_end = row['timestamp_end']
+
+        # Filter dataframe for tickets within the lookback window
+        lookback_data = dataframe[(dataframe['timestamp_end'] >= lookback_start) & (dataframe['timestamp_end'] <= lookback_end)]
+
+        # Compute metrics
+        dataframe.at[idx, 'median_cycletime'] = np.ceil(lookback_data['cycletime'].median())
+        dataframe.at[idx, 'p85_cycletime']    = np.ceil(lookback_data['cycletime'].quantile(0.85))
+        dataframe.at[idx, 'throughput']       = np.ceil(lookback_data.shape[0])
+
+    return dataframe
+
+def format_value(value):
+    s = str(value)
+    return s.rstrip('.0') if '.' in s else s
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -48,16 +74,17 @@ if __name__ == "__main__":
     # read in data and calculate cycletime
     dataframe = extract_ticket_timestamps(file_path)
     dataframe = calculate_cycletime(dataframe)
-
+    dataframe = compute_metrics(dataframe)
+    
     # select which fields I want
-    dataframe = dataframe[['Key', 'timestamp_start', 'timestamp_end', 'cycletime']]
+    dataframe = dataframe[['Key', 'timestamp_start', 'timestamp_end', 'cycletime', 'median_cycletime', 'p85_cycletime', 'throughput']]
 
 
     # Print to stdout
     tickets_data = dataframe.sort_values(by='timestamp_end').values.tolist()
-    headers = ['Key', 'timestamp_start', 'timestamp_end', 'cycletime']
+    headers = ['Key', 'timestamp_start', 'timestamp_end', 'cycletime', 'median_cycletime', 'p85_cycletime', 'throughput']
     print("|".join(headers))
     for row in tickets_data:
-        print("|".join(map(str, row)))
+        print("|".join(map(format_value, row)))
 
 
