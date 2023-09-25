@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import argparse
 import pandas as pd
 import numpy as np
 #from pprint import pprint
 import sys
+import os
 
 def extract_ticket_timestamps(file_path):
     data = pd.read_csv(file_path,
@@ -65,11 +67,22 @@ def format_value(value):
     s = str(value)
     return s.rstrip('.0') if '.' in s else s
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Please provide a file path as an argument.")
+
+
+def print_help():
+    print("leanStats.py - get lean metrics from jira csv")
+
+    
+def main():
+    parser = argparse.ArgumentParser(description="Your script description")
+    parser.add_argument('-i', '--input', type=str, required=True, help='Path to input file')
+    args = parser.parse_args()
+    
+    file_path = args.input
+    if not os.path.isfile(file_path):
+        print(f"The file '{file_path}' does not exist or is not readable.")
         sys.exit(1)
-    file_path = sys.argv[1]
+
 
     # read in data and calculate cycletime
     dataframe = extract_ticket_timestamps(file_path)
@@ -88,3 +101,7 @@ if __name__ == "__main__":
         print("|".join(map(format_value, row)))
 
 
+
+
+if __name__ == "__main__":
+    main()
