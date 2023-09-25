@@ -1,0 +1,17 @@
+Issue Type,Key,Summary,Status Transition.from,Status Transition.to,Status Transition.date,Project.key,Status
+
+Task,PROJ-001,A Summary,Backlog,To Do,14/08/2023 12:43:35,PROJ,Done
+Task,PROJ-001,A Summary,To Do,In Progress,15/08/2023 06:39:14,PROJ,Done
+Task,PROJ-001,A Summary,In Progress,Done,20/08/2023 07:39:21,PROJ,Done
+
+Task,PROJ-002,Another summary,Review & QA,DONE,09/08/2023 12:03:24,PROJ,Done
+Task,PROJ-002,Another summary,In Progress,Review & QA,09/08/2023 12:03:20,PROJ,Done
+Task,PROJ-002,Another summary,To Do,In Progress,09/08/2023 07:38:10,PROJ,Done
+Task,PROJ-002,Another summary,Backlog,To Do,07/08/2023 12:19:00,PROJ,Done
+
+Task,PROJ-003,Third summary,In Progress,DONE,09/08/2023 14:09:05,PROJ,Done
+Task,PROJ-003,Third summary,Backlog,In Progress,07/08/2023 10:46:48,PROJ,Done
+
+Story,PROJ-004,Last summary,In Progress,DONE,07/08/2023 11:23:58,PROJ,Done
+Story,PROJ-004,Last summary,To Do,In Progress,07/08/2023 11:23:54,PROJ,Done
+Story,PROJ-004,Last summary,Backlog,To Do,04/08/2023 12:45:16,PROJ,Done
