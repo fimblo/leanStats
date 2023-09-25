@@ -2,21 +2,10 @@
 
 import pandas as pd
 import numpy as np
-from pprint import pprint
+#from pprint import pprint
 import sys
 
-def read_and_output_csv(file_path):
-    """Read a CSV file and print it to stdout."""
-    data = pd.read_csv(file_path)
-
-
-    for index, row in data.iterrows():
-        output_row = '->'.join(['{}'.format(cell) for cell in row])
-        print(output_row)
-
-
 def extract_ticket_timestamps(file_path):
-
     data = pd.read_csv(file_path,
                        parse_dates=['Status Transition.date'],
                        dayfirst=True) # dd/mm/yy madness
@@ -34,31 +23,41 @@ def extract_ticket_timestamps(file_path):
             .rename(columns={'Status Transition.date': 'timestamp_end'}))
     
     # left join on key.
-    result = in_progress.join(done, on='Key').reset_index()
+    return in_progress.join(done, on='Key').reset_index()
 
-    # Calculate cycle time, rounding up to the nearest day
-    time_difference     = result['timestamp_end'] - result['timestamp_start']
-    total_seconds       = time_difference.dt.total_seconds()
-    cycletime_in_days   = np.ceil(total_seconds / (24 * 3600))
-    result['cycletime'] = cycletime_in_days.astype(int)
 
-    return result
+
+def calculate_cycletime(dataframe):
+    df_copy = dataframe.copy()
+    
+    time_difference      = df_copy['timestamp_end'] - df_copy['timestamp_start']
+    total_seconds        = time_difference.dt.total_seconds()
+    cycletime_in_days    = np.ceil(total_seconds / (24 * 3600))
+    df_copy['cycletime'] = cycletime_in_days.astype(int)
+
+    return df_copy
+
 
 
 if __name__ == "__main__":
-    # Check if a file path is provided
     if len(sys.argv) < 2:
         print("Please provide a file path as an argument.")
         sys.exit(1)
     file_path = sys.argv[1]
 
+    # read in data and calculate cycletime
     dataframe = extract_ticket_timestamps(file_path)
+    dataframe = calculate_cycletime(dataframe)
 
-    
-    tickets_data = dataframe[['Key',
-                              'timestamp_start',
-                              'timestamp_end',
-                              'cycletime']].values.tolist()
+    # select which fields I want
+    dataframe = dataframe[['Key', 'timestamp_start', 'timestamp_end', 'cycletime']]
 
-    pprint(tickets_data)
+
+    # Print to stdout
+    tickets_data = dataframe.sort_values(by='timestamp_end').values.tolist()
+    headers = ['Key', 'timestamp_start', 'timestamp_end', 'cycletime']
+    print("|".join(headers))
+    for row in tickets_data:
+        print("|".join(map(str, row)))
+
 
