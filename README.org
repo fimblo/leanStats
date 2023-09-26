@@ -1,4 +1,5 @@
 * leanStats Project
+[[https://github.com/fimblo/leanStats/actions/workflows/test.yml/badge.svg]]
 
 ** Description
 This is the leanStats project, which computes lean metrics on Kanban
