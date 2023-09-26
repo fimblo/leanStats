@@ -78,6 +78,41 @@ def compute_metrics(dataframe):
     return dataframe
 
 
+def print_ticket_metrics(dataframe_in):
+    dataframe = dataframe_in.copy()
+
+    dataframe = dataframe[
+        [
+            "Key",
+            "timestamp_start",
+            "timestamp_end",
+            "cycletime",
+            "median_cycletime",
+            "p85_cycletime",
+            "throughput",
+        ]
+    ]
+
+    # Print to stdout
+    def format_value(value):
+        s = str(value)
+        return s.rstrip(".0") if "." in s else s
+
+    tickets_data = dataframe.sort_values(by="timestamp_end").values.tolist()
+    headers = [
+        "Key",
+        "timestamp_start",
+        "timestamp_end",
+        "cycletime",
+        "median_cycletime",
+        "p85_cycletime",
+        "throughput",
+    ]
+    print("|".join(headers))
+    for row in tickets_data:
+        print("|".join(map(format_value, row)))
+
+
 def print_help():
     print("leanStats.py - get lean metrics from jira csv")
 
@@ -128,39 +163,7 @@ def main():
     dataframe = calculate_cycletime(dataframe)
     dataframe = compute_metrics(dataframe)
 
-    # get weekly stats
-
-    # select which fields I want
-    dataframe = dataframe[
-        [
-            "Key",
-            "timestamp_start",
-            "timestamp_end",
-            "cycletime",
-            "median_cycletime",
-            "p85_cycletime",
-            "throughput",
-        ]
-    ]
-
-    # Print to stdout
-    def format_value(value):
-        s = str(value)
-        return s.rstrip(".0") if "." in s else s
-
-    tickets_data = dataframe.sort_values(by="timestamp_end").values.tolist()
-    headers = [
-        "Key",
-        "timestamp_start",
-        "timestamp_end",
-        "cycletime",
-        "median_cycletime",
-        "p85_cycletime",
-        "throughput",
-    ]
-    print("|".join(headers))
-    for row in tickets_data:
-        print("|".join(map(format_value, row)))
+    print_ticket_metrics(dataframe)
 
 
 if __name__ == "__main__":
