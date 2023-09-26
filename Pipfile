@@ -1,4 +1,5 @@
 # -*- mode: python -*-
+
 [[source]]
 url = "https://pypi.org/simple"
 verify_ssl = true
@@ -10,15 +11,17 @@ pytest = "*"
 numpy = "*"
 
 [dev-packages]
+black = "*"
 
 [requires]
 python_version = "3.10"
-# run scripts using `pipenv run <name>`
 
 [scripts]
-leanStats = "python src/leanStats.py"
+start = "python src/leanStats.py"
 test = "pytest tests"
+formatcheck = "black --check src tests"
+formatdiff = "black --diff src tests"
+formatfix =  "black src tests"
 
-[tool.pytest]
-testpaths = ["tests"]
-
+[tool]
+pytest = {testpaths = ["tests"]}
