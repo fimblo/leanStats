@@ -46,7 +46,7 @@ def calculate_cycletime(dataframe):
     return df_copy
 
 
-def compute_metrics(dataframe, lookback_window):
+def compute_metrics(dataframe):
     # Sort dataframe by 'timestamp_end'
     dataframe = dataframe.sort_values(by="timestamp_end")
 
@@ -55,9 +55,9 @@ def compute_metrics(dataframe, lookback_window):
     dataframe["p85_cycletime"] = np.nan
     dataframe["throughput"] = np.nan
 
-    # For each ticket, compute metrics over a 7-day lookback window
+    # For each ticket, compute metrics over lookback window of 1 week
     for idx, row in dataframe.iterrows():
-        lookback_start = row["timestamp_end"] - pd.Timedelta(days=lookback_window)
+        lookback_start = row["timestamp_end"] - pd.Timedelta(days=7)
         lookback_end = row["timestamp_end"]
 
         # Filter dataframe for tickets within the lookback window
@@ -98,14 +98,6 @@ def main():
         type=str,
         required=False,
     )
-    parser.add_argument(
-        "-w",
-        "--lookback-window",
-        help="Size of window in days for metric calculations. (default 7)",
-        type=int,
-        default=7,
-        required=False,
-    )
     args = parser.parse_args()
 
     # If a configuration file is provided, overwrite all command-line
@@ -118,14 +110,8 @@ def main():
         config.read(args.config_file)
 
         file_path = config.get("SYSTEM", "input_csv_file", fallback=None)
-        try:
-            lookback_window = int(config.get("METRICS", "lookback_window", fallback=7))
-        except ValueError:
-            print(f"Config file error: lookback_window needs to be a number.")
-            sys.exit(1)
     else:
         file_path = args.input_csv_file
-        lookback_window = args.lookback_window
 
     # Validate command line arguments
     if not args.config_file and not file_path:
@@ -140,7 +126,9 @@ def main():
     # read in data and calculate cycletime
     dataframe = extract_ticket_timestamps(file_path)
     dataframe = calculate_cycletime(dataframe)
-    dataframe = compute_metrics(dataframe, lookback_window)
+    dataframe = compute_metrics(dataframe)
+
+    # get weekly stats
 
     # select which fields I want
     dataframe = dataframe[

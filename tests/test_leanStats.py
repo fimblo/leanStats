@@ -95,8 +95,8 @@ def test_compute_metrics_basic_functionality():
     }
     df = pd.DataFrame(data)
 
-    # When: Run the compute_metrics function with 7 days lookback
-    result_df = compute_metrics(df, 7)
+    # When: Run the compute_metrics function
+    result_df = compute_metrics(df)
 
     # Then: Check the basic functionality
 
