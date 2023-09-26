@@ -66,21 +66,10 @@ def compute_metrics(dataframe, lookback_window):
     return dataframe
 
 
-def format_value(value):
-    s = str(value)
-    return s.rstrip('.0') if '.' in s else s
-
-
 def print_help():
     print("leanStats.py - get lean metrics from jira csv")
 
 
-def read_config(config_path):
-    config = configparser.ConfigParser()
-    config.read(config_path)
-    return config
-
-    
 def main():
     parser = argparse.ArgumentParser(description="calculate lean metrics")
     parser.add_argument('-c', '--config-file',
@@ -100,7 +89,9 @@ def main():
         if not os.path.isfile(args.config_file):
             print(f"The file '{args.config_file}' does not exist or is not readable.")
             sys.exit(1)
-        config = read_config(args.config_file)
+        config = configparser.ConfigParser()
+        config.read(args.config_file)
+
         file_path = config.get("SYSTEM", "input_csv_file", fallback=None)
         try:
             lookback_window = int(config.get("METRICS", "lookback_window", fallback=7))
@@ -136,6 +127,9 @@ def main():
 
 
     # Print to stdout
+    def format_value(value):
+        s = str(value)
+        return s.rstrip('.0') if '.' in s else s
     tickets_data = dataframe.sort_values(by='timestamp_end').values.tolist()
     headers = ['Key', 'timestamp_start', 'timestamp_end', 'cycletime', 'median_cycletime', 'p85_cycletime', 'throughput']
     print("|".join(headers))
