@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import configparser
 import pandas as pd
 import numpy as np
 #from pprint import pprint
@@ -39,6 +40,7 @@ def calculate_cycletime(dataframe):
 
     return df_copy
 
+
 def compute_metrics(dataframe):
     # Sort dataframe by 'timestamp_end'
     dataframe = dataframe.sort_values(by='timestamp_end')
@@ -63,22 +65,55 @@ def compute_metrics(dataframe):
 
     return dataframe
 
+
 def format_value(value):
     s = str(value)
     return s.rstrip('.0') if '.' in s else s
 
 
-
 def print_help():
     print("leanStats.py - get lean metrics from jira csv")
 
+
+def read_config(config_path):
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    return config
+
     
 def main():
-    parser = argparse.ArgumentParser(description="Your script description")
-    parser.add_argument('-i', '--input', type=str, required=True, help='Path to input file')
+    parser = argparse.ArgumentParser(description="calculate lean metrics")
+    parser.add_argument('-c', '--config',
+                        type=str,
+                        required=False,
+                        help='Path to config file. Overrides all other commandline params if specified.')
+    parser.add_argument('-i', '--input',
+                        type=str,
+                        required=False,
+                        help='Path to input file with CSV values.')
     args = parser.parse_args()
     
-    file_path = args.input
+    # If a configuration file is provided, overwrite all command-line
+    # arguments
+    if args.config:
+        if not os.path.isfile(args.config):
+            print(f"The file '{args.config}' does not exist or is not readable.")
+            sys.exit(1)
+        config = read_config(args.config)
+        file_path = config.get("SYSTEM", "input", fallback=None)
+    else:
+        file_path = args.input
+
+
+    # Validate command line arguments
+    if not args.config and not file_path:
+        print("Error: Either -c (config file) or -i (input file) must be provided.")
+        sys.exit(1)
+
+
+
+
+    # Sanity checks
     if not os.path.isfile(file_path):
         print(f"The file '{file_path}' does not exist or is not readable.")
         sys.exit(1)
