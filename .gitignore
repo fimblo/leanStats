@@ -1,7 +1,7 @@
 # project stuff to exclude
 notes/
 data/
-
+tmp/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
