@@ -83,30 +83,28 @@ def read_config(config_path):
     
 def main():
     parser = argparse.ArgumentParser(description="calculate lean metrics")
-    parser.add_argument('-c', '--config',
-                        type=str,
-                        required=False,
-                        help='Path to config file. Overrides all other commandline params if specified.')
-    parser.add_argument('-i', '--input',
-                        type=str,
-                        required=False,
-                        help='Path to input file with CSV values.')
+    parser.add_argument('-c', '--config-file',
+                        help='Path to config file. Overrides all other commandline params if specified.',
+                        type=str, required=False)
+    parser.add_argument('-i', '--input-csv-file',
+                        help='Path to input file with CSV values.',
+                        type=str, required=False)
     args = parser.parse_args()
     
     # If a configuration file is provided, overwrite all command-line
     # arguments
-    if args.config:
-        if not os.path.isfile(args.config):
-            print(f"The file '{args.config}' does not exist or is not readable.")
+    if args.config_file:
+        if not os.path.isfile(args.config_file):
+            print(f"The file '{args.config_file}' does not exist or is not readable.")
             sys.exit(1)
-        config = read_config(args.config)
-        file_path = config.get("SYSTEM", "input", fallback=None)
+        config = read_config(args.config_file)
+        file_path = config.get("SYSTEM", "input_csv_file", fallback=None)
     else:
-        file_path = args.input
+        file_path = args.input_csv_file
 
 
     # Validate command line arguments
-    if not args.config and not file_path:
+    if not args.config_file and not file_path:
         print("Error: Either -c (config file) or -i (input file) must be provided.")
         sys.exit(1)
 
