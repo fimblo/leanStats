@@ -5,7 +5,7 @@ import configparser
 import pandas as pd
 import numpy as np
 
-# from pprint import pprint
+from pprint import pprint
 import sys
 import os
 
@@ -78,39 +78,72 @@ def compute_metrics(dataframe):
     return dataframe
 
 
+def weekly_metrics(dataframe):
+    # populate week column
+    dataframe["week"] = dataframe["timestamp_end"].dt.strftime("%Y-W%U")
+
+    # Group by week
+    weekly_data = (
+        dataframe.groupby("week")
+        .agg(
+            {
+                "cycletime": [
+                    lambda x: np.ceil(x.quantile(0.5)),
+                    lambda x: np.ceil(x.quantile(0.85)),
+                ],
+                "Key": "count",  # throughput
+            }
+        )
+        .reset_index()
+    )
+    weekly_data.columns = ["week", "cycletime_p50", "cycletime_p85", "throughput"]
+
+    # calculate start and end dates for all weeks
+    weekly_data["startdate"] = pd.to_datetime(
+        weekly_data["week"].apply(lambda x: x + "-1"), format="%Y-W%U-%w"
+    )
+    weekly_data["enddate"] = weekly_data["startdate"] + pd.Timedelta(days=6)
+
+    # Clone the date data from weekly_data to all_weeks
+    all_weeks = weekly_data[["week", "startdate", "enddate"]].copy()
+
+    # Generate a dataframe with all weeks in the range
+    complete_weeks = pd.DataFrame(
+        {
+            "startdate": pd.date_range(
+                start=weekly_data["startdate"].min(),
+                end=weekly_data["enddate"].max(),
+                freq="W-MON",
+            )
+        }
+    )
+    complete_weeks["enddate"] = complete_weeks["startdate"] + pd.Timedelta(days=6)
+    complete_weeks["week"] = complete_weeks["startdate"].dt.strftime("%Y-W%U")
+
+    # Merge complete_weeks with all_weeks to fill in missing weeks
+    all_weeks = pd.merge(
+        complete_weeks, all_weeks, on=["week", "startdate", "enddate"], how="left"
+    )
+
+    # Now merge all_weeks with weekly_data to get the metrics
+    result = pd.merge(
+        all_weeks,
+        weekly_data.drop(columns=["startdate", "enddate"]),
+        on="week",
+        how="left",
+    )
+
+    return result[
+        ["startdate", "enddate", "cycletime_p50", "cycletime_p85", "throughput"]
+    ]
+
+
+def print_weekly_metrics(dataframe_in):
+    print(dataframe_in.to_string(index=False))
+
+
 def print_ticket_metrics(dataframe_in):
-    dataframe = dataframe_in.copy()
-
-    dataframe = dataframe[
-        [
-            "Key",
-            "timestamp_start",
-            "timestamp_end",
-            "cycletime",
-            "median_cycletime",
-            "p85_cycletime",
-            "throughput",
-        ]
-    ]
-
-    # Print to stdout
-    def format_value(value):
-        s = str(value)
-        return s.rstrip(".0") if "." in s else s
-
-    tickets_data = dataframe.sort_values(by="timestamp_end").values.tolist()
-    headers = [
-        "Key",
-        "timestamp_start",
-        "timestamp_end",
-        "cycletime",
-        "median_cycletime",
-        "p85_cycletime",
-        "throughput",
-    ]
-    print("|".join(headers))
-    for row in tickets_data:
-        print("|".join(map(format_value, row)))
+    print(dataframe_in.sort_values(by="timestamp_end").to_string(index=False))
 
 
 def print_help():
@@ -164,6 +197,10 @@ def main():
     dataframe = compute_metrics(dataframe)
 
     print_ticket_metrics(dataframe)
+
+    # get weekly stats
+    weekly_df = weekly_metrics(dataframe)
+    print_weekly_metrics(weekly_df)
 
 
 if __name__ == "__main__":

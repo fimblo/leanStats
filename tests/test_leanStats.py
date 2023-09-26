@@ -1,10 +1,16 @@
 import pytest
 import pandas as pd
+import numpy as np
 from io import StringIO
 import sys
 import os
 
-from leanStats import extract_ticket_timestamps, calculate_cycletime, compute_metrics
+from leanStats import (
+    extract_ticket_timestamps,
+    calculate_cycletime,
+    compute_metrics,
+    weekly_metrics,
+)
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -121,3 +127,85 @@ def test_compute_metrics_basic_functionality():
     assert result_df.loc[result_df["Key"] == "D", "median_cycletime"].values[0] == 4
     assert result_df.loc[result_df["Key"] == "D", "p85_cycletime"].values[0] == 5
     assert result_df.loc[result_df["Key"] == "D", "throughput"].values[0] == 4
+
+
+def test_basic_input():
+    # Given: A basic input DataFrame
+    data = {
+        "timestamp_end": ["2023-01-01", "2023-01-03", "2023-01-05"],
+        "cycletime": [5, 7, 6],
+        "Key": [1, 2, 3],
+    }
+    df = pd.DataFrame(data)
+    df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])
+
+    # When: Calling the weekly_metrics function
+    result = weekly_metrics(df)
+
+    # Then: It should handle and return the expected output
+    expected = [(pd.Timestamp("2023-01-02"), pd.Timestamp("2023-01-08"), 6.0, 7.0, 3)]
+    assert list(result.itertuples(index=False, name=None)) == expected
+
+
+def test_fill_missing_week():
+    # Given: Input data with a gap week
+    data = {
+        "timestamp_end": ["2023-01-01", "2023-01-15"],
+        "cycletime": [5, 7],
+        "Key": [1, 2],
+    }
+    df = pd.DataFrame(data)
+    df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])
+
+    # When: Calling the weekly_metrics function
+    result = weekly_metrics(df)
+
+    # Then: It should fill the missing week with NaN
+    expected = [
+        (pd.Timestamp("2023-01-02"), pd.Timestamp("2023-01-08"), 5.0, 5.0, 1),
+        (
+            pd.Timestamp("2023-01-09"),
+            pd.Timestamp("2023-01-15"),
+            np.nan,
+            np.nan,
+            np.nan,
+        ),
+        (pd.Timestamp("2023-01-16"), pd.Timestamp("2023-01-22"), 7.0, 7.0, 1),
+    ]
+
+    expected_df = pd.DataFrame(
+        expected,
+        columns=[
+            "startdate",
+            "enddate",
+            "cycletime_p50",
+            "cycletime_p85",
+            "throughput",
+        ],
+    )
+
+    # Use the pandas equals method which considers NaN values as equal
+    assert result.equals(expected_df)
+
+
+def test_expected_columns():
+    # Given: Any DataFrame
+    data = {
+        "timestamp_end": ["2023-01-01", "2023-01-03"],
+        "cycletime": [5, 6],
+        "Key": [1, 2],
+    }
+    df = pd.DataFrame(data)
+    df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])
+
+    # When: Calling the weekly_metrics function
+    result = weekly_metrics(df)
+
+    # Then: It should return the expected columns
+    assert list(result.columns) == [
+        "startdate",
+        "enddate",
+        "cycletime_p50",
+        "cycletime_p85",
+        "throughput",
+    ]
