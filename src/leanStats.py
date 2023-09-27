@@ -10,14 +10,10 @@ import sys
 import os
 
 
-def extract_ticket_timestamps(file_path):
-    data = pd.read_csv(
-        file_path, parse_dates=["Status Transition.date"], dayfirst=True
-    )  # dd/mm/yy madness
-
+def extract_ticket_timestamps(dataframe_in):
     # filter when tickets moved to IN PROGRESS
     in_progress = (
-        data[data["Status Transition.to"].str.upper() == "IN PROGRESS"]
+        dataframe_in[dataframe_in["Status Transition.to"].str.upper() == "IN PROGRESS"]
         .groupby("Key")
         .agg({"Status Transition.date": "min"})
         .rename(columns={"Status Transition.date": "timestamp_start"})
@@ -25,7 +21,7 @@ def extract_ticket_timestamps(file_path):
 
     # filter when tickets moved to DONE
     done = (
-        data[data["Status Transition.to"].str.upper() == "DONE"]
+        dataframe_in[dataframe_in["Status Transition.to"].str.upper() == "DONE"]
         .groupby("Key")
         .agg({"Status Transition.date": "max"})
         .rename(columns={"Status Transition.date": "timestamp_end"})
@@ -192,7 +188,10 @@ def main():
         sys.exit(1)
 
     # read in data and calculate cycletime
-    dataframe = extract_ticket_timestamps(file_path)
+    data = pd.read_csv(
+        file_path, parse_dates=["Status Transition.date"], dayfirst=True
+    )  # dd/mm/yy madness
+    dataframe = extract_ticket_timestamps(data)
     dataframe = calculate_cycletime(dataframe)
     dataframe = compute_metrics(dataframe)
 

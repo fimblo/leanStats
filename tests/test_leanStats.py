@@ -38,7 +38,10 @@ TICKET-2,20/09/2023,DONE
 
 
 def test_extract_ticket_datestamps(sample_data_date):
-    df = extract_ticket_timestamps(sample_data_date)
+    data = pd.read_csv(
+        sample_data_date, parse_dates=["Status Transition.date"], dayfirst=True
+    )
+    df = extract_ticket_timestamps(data)
 
     assert len(df) == 2
     assert df.iloc[0]["Key"] == "TICKET-1"
@@ -50,7 +53,10 @@ def test_extract_ticket_datestamps(sample_data_date):
 
 
 def test_extract_ticket_timestamps(sample_data_time):
-    df = extract_ticket_timestamps(sample_data_time)
+    data = pd.read_csv(
+        sample_data_time, parse_dates=["Status Transition.date"], dayfirst=True
+    )
+    df = extract_ticket_timestamps(data)
 
     assert len(df) == 2
     assert df.iloc[0]["Key"] == "TICKET-1"
@@ -74,7 +80,10 @@ def test_extract_ticket_timestamps(sample_data_time):
 
 
 def test_calculate_cycletime(sample_data_time):
-    df = extract_ticket_timestamps(sample_data_time)
+    data = pd.read_csv(
+        sample_data_time, parse_dates=["Status Transition.date"], dayfirst=True
+    )
+    df = extract_ticket_timestamps(data)
     df = calculate_cycletime(df)
 
     # we always round cycle time up.
