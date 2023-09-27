@@ -42,7 +42,7 @@ def calculate_cycletime(dataframe):
     return df_copy
 
 
-def compute_metrics(dataframe):
+def compute_metrics_per_ticket(dataframe):
     # Sort dataframe by 'timestamp_end'
     dataframe = dataframe.sort_values(by="timestamp_end")
 
@@ -74,7 +74,7 @@ def compute_metrics(dataframe):
     return dataframe
 
 
-def weekly_metrics(dataframe):
+def compute_metrics_per_week(dataframe):
     # populate week column
     dataframe["week"] = dataframe["timestamp_end"].dt.strftime("%Y-W%U")
 
@@ -193,12 +193,13 @@ def main():
     )  # dd/mm/yy madness
     dataframe = extract_ticket_timestamps(data)
     dataframe = calculate_cycletime(dataframe)
-    dataframe = compute_metrics(dataframe)
 
+    # get per-ticket metrics
+    dataframe = compute_metrics_per_ticket(dataframe)
     print_ticket_metrics(dataframe)
 
-    # get weekly stats
-    weekly_df = weekly_metrics(dataframe)
+    # get metrics grouped by week
+    weekly_df = compute_metrics_per_week(dataframe)
     print_weekly_metrics(weekly_df)
 
 

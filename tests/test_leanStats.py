@@ -8,8 +8,8 @@ import os
 from leanStats import (
     extract_ticket_timestamps,
     calculate_cycletime,
-    compute_metrics,
-    weekly_metrics,
+    compute_metrics_per_ticket,
+    compute_metrics_per_week,
 )
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -96,7 +96,7 @@ def test_calculate_cycletime(sample_data_time):
     )  # 5 days from '2023-09-16' to '2023-09-20 + 1 minute'
 
 
-def test_compute_metrics_basic_functionality():
+def test_compute_metrics_per_ticket_basic_functionality():
     # Given: Create a mock dataframe
     data = {
         "Key": ["A", "B", "C", "D"],
@@ -110,8 +110,8 @@ def test_compute_metrics_basic_functionality():
     }
     df = pd.DataFrame(data)
 
-    # When: Run the compute_metrics function
-    result_df = compute_metrics(df)
+    # When: Run the compute_metrics_per_ticket function
+    result_df = compute_metrics_per_ticket(df)
 
     # Then: Check the basic functionality
 
@@ -148,8 +148,8 @@ def test_basic_input():
     df = pd.DataFrame(data)
     df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])
 
-    # When: Calling the weekly_metrics function
-    result = weekly_metrics(df)
+    # When: Calling the compute_metrics_per_week function
+    result = compute_metrics_per_week(df)
 
     # Then: It should handle and return the expected output
     expected = [(pd.Timestamp("2023-01-02"), pd.Timestamp("2023-01-08"), 6.0, 7.0, 3)]
@@ -166,8 +166,8 @@ def test_fill_missing_week():
     df = pd.DataFrame(data)
     df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])
 
-    # When: Calling the weekly_metrics function
-    result = weekly_metrics(df)
+    # When: Calling the compute_metrics_per_week function
+    result = compute_metrics_per_week(df)
 
     # Then: It should fill the missing week with NaN
     expected = [
@@ -207,8 +207,8 @@ def test_expected_columns():
     df = pd.DataFrame(data)
     df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])
 
-    # When: Calling the weekly_metrics function
-    result = weekly_metrics(df)
+    # When: Calling the compute_metrics_per_week function
+    result = compute_metrics_per_week(df)
 
     # Then: It should return the expected columns
     assert list(result.columns) == [
