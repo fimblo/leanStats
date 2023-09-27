@@ -18,12 +18,12 @@ black = "*"
 python_version = "3.10"
 
 [scripts]
-start = "python src/leanStats.py"
+start_stats = "python src/leanStats.py"
+start_jira = "python src/jira_link.py"
 test = "pytest tests"
 formatcheck = "black --check src tests"
 formatdiff = "black --diff src tests"
 formatfix =  "black src tests"
-jira = "python src/jira_link.py"
 
 [tool]
 pytest = {testpaths = ["tests"]}
