@@ -5,6 +5,7 @@ import configparser
 import pandas as pd
 import numpy as np
 import re
+import datetime
 
 import sys
 import os
@@ -191,9 +192,17 @@ def main():
         sys.exit(1)
 
     # read in data and calculate cycletime
-    data = pd.read_csv(
-        file_path, parse_dates=["changed_at"], dayfirst=True
-    )  # dd/mm/yy madness
+    def custom_date_parser(date_str):
+        # First, try parsing the sane format
+        try:
+            return datetime.datetime.fromisoformat(date_str)
+        except ValueError:
+            # If unsuccessful, try freedom format
+            return datetime.datetime.strptime(date_str, "%d/%m/%Y %H:%M:%S")
+
+    data = pd.read_csv(file_path, dtype={"changed_at": str})
+    data["changed_at"] = data["changed_at"].apply(custom_date_parser)
+
     dataframe = extract_ticket_timestamps(data, cfg)
     dataframe = calculate_cycletime(dataframe)
 
