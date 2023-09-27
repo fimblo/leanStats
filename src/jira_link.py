@@ -60,7 +60,7 @@ def get_tickets_from_mockfile(cfg):
         )
         sys.exit(1)
 
-    return pd.read_csv(file_path, parse_dates=["changed_at"])
+    return pd.read_csv(mock_datafile, parse_dates=["changed_at"])
 
 
 def print_help():
