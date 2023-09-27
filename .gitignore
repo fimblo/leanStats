@@ -2,6 +2,7 @@
 notes/
 data/
 tmp/
+config/local.config
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
