@@ -153,34 +153,17 @@ def main():
         "--config-file",
         help="Path to config file. Overrides all other commandline params if specified.",
         type=str,
-        required=False,
-    )
-    parser.add_argument(
-        "-i",
-        "--input-csv-file",
-        help="Path to input file with CSV values.",
-        type=str,
-        required=False,
+        required=True,
     )
     args = parser.parse_args()
 
-    # If a configuration file is provided, overwrite all command-line
-    # arguments
-    if args.config_file:
-        if not os.path.isfile(args.config_file):
-            print(f"The file '{args.config_file}' does not exist or is not readable.")
-            sys.exit(1)
-        config = configparser.ConfigParser()
-        config.read(args.config_file)
-
-        file_path = config.get("SYSTEM", "input_csv_file", fallback=None)
-    else:
-        file_path = args.input_csv_file
-
-    # Validate command line arguments
-    if not args.config_file and not file_path:
-        print("Error: Either -c (config file) or -i (input file) must be provided.")
+    if not os.path.isfile(args.config_file):
+        print(f"The file '{args.config_file}' does not exist or is not readable.")
         sys.exit(1)
+    config = configparser.ConfigParser()
+    config.read(args.config_file)
+
+    file_path = config.get("SYSTEM", "input_csv_file", fallback=None)
 
     # Sanity checks
     if not os.path.isfile(file_path):
