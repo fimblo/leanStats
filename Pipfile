@@ -9,6 +9,7 @@ name = "pypi"
 pandas = "*"
 pytest = "*"
 numpy = "*"
+jira = "*"
 
 [dev-packages]
 black = "*"
@@ -22,6 +23,7 @@ test = "pytest tests"
 formatcheck = "black --check src tests"
 formatdiff = "black --diff src tests"
 formatfix =  "black src tests"
+jira = "python src/jira_connector.py"
 
 [tool]
 pytest = {testpaths = ["tests"]}
