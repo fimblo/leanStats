@@ -2,14 +2,32 @@
 
 from jira import JIRA
 import pandas as pd
+import os
+import sys
 
 
-def connect_to_jira(jira_url, api_key, user_email):
-    options = {"server": jira_url}
-    return JIRA(options, basic_auth=(user_email, api_key))
+def connect_to_jira(source_info):
+    options = {"server": source_info["jira_url"]}
+    return JIRA(options, basic_auth=(source_info["email"], source_info["api_token"]))
 
 
-def get_tickets_as_dataframe(jira_client, jira_filter):
+def get_tickets(source_info):
+    if source_info["mock_jira_data"]:
+        return get_tickets_from_mockfile(source_info)
+    else:
+        jira_client = connect_to_jira(source_info)
+        project_key = source_info["project_key"]
+        return get_tickets_from_jira(
+            jira_client,
+            (
+                f"project = '{project_key}' AND "
+                "issuetype in (Bug, Story, Task) AND "
+                'status changed DURING ("2023/09/11", "2023/09/24")'
+            ),
+        )
+
+
+def get_tickets_from_jira(jira_client, jira_filter):
     issues = jira_client.search_issues(
         jql_str=jira_filter, expand="changelog", maxResults=100
     )
@@ -30,6 +48,17 @@ def get_tickets_as_dataframe(jira_client, jira_filter):
                     )
 
     return pd.DataFrame(ticket_data)
+
+
+def get_tickets_from_mockfile(source_info):
+    mock_datafile = source_info["mock_jira_data"]
+    if not os.path.isfile(mock_datafile):
+        print(
+            f"The mock jira data file '{mock_datafile}' does not exist or is not readable."
+        )
+        sys.exit(1)
+
+    return pd.read_csv(file_path, parse_dates=["changed_at"])
 
 
 def print_help():
@@ -57,20 +86,16 @@ if __name__ == "__main__":
     # Get configfile settings
     config = configparser.ConfigParser()
     config.read(args.config_file)
-    email = config.get("JIRA", "EMAIL", fallback=None)
-    api_token = config.get("JIRA", "API_TOKEN", fallback=None)
-    jira_instance = config.get("JIRA", "JIRA_URL", fallback=None)
-    project_key = config.get("JIRA", "PROJECT_KEY", fallback=None)
+    source_info = {
+        "email": config.get("JIRA", "EMAIL", fallback=None),
+        "jira_url": config.get("JIRA", "JIRA_URL", fallback=None),
+        "api_token": config.get("JIRA", "API_TOKEN", fallback=None),
+        "project_key": config.get("JIRA", "PROJECT_KEY", fallback=None),
+        "mock_jira_data": config.get("JIRA", "MOCK_JIRA_DATA", fallback=None),
+    }
 
-    # connect to jira and get ticket data
-    jira_client = connect_to_jira(jira_instance, api_token, email)
-    dataframe = get_tickets_as_dataframe(
-        jira_client,
-        (
-            f"project = '{project_key}' AND "
-            "issuetype in (Bug, Story, Task) AND "
-            'status changed DURING ("2023/09/11", "2023/09/24")'
-        ),
-    )
+    # connect to a source and get ticket data
+    # source can be: jira or mockfile
+    dataframe = get_tickets(source_info)
 
     print(dataframe.sort_values(by="changed_at").to_string(index=False))

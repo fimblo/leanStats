@@ -2,7 +2,7 @@
 
 import pandas as pd
 from unittest.mock import patch, Mock
-from jira_link import connect_to_jira, get_tickets_as_dataframe
+from jira_link import connect_to_jira, get_tickets_from_jira
 
 
 def test_connect_to_jira():
@@ -12,9 +12,13 @@ def test_connect_to_jira():
         mock_instance = Mock()
         mock_jira.return_value = mock_instance
 
-        result = connect_to_jira(
-            "https://jira.example.com", "api_key_123", "email@example.com"
-        )
+        source_info = {
+            "email": "email@example.com",
+            "jira_url": "https://jira.example.com",
+            "api_token": "api_key_123",
+        }
+
+        result = connect_to_jira(source_info)
 
         mock_jira.assert_called_once_with(
             {"server": "https://jira.example.com"},
@@ -24,7 +28,7 @@ def test_connect_to_jira():
 
 
 @patch("jira_link.JIRA")
-def test_get_tickets_as_dataframe(mocked_jira_class):
+def test_get_tickets_from_jira(mocked_jira_class):
     # Given: a mock jira client
     mock_item = Mock()
     mock_item.field = "status"
@@ -45,7 +49,7 @@ def test_get_tickets_as_dataframe(mocked_jira_class):
     # When: Execute the behavior under test (note: no need for a real
     # filter, since the mocked_jira_client returns what it does
     # regardless of the filter)
-    df = get_tickets_as_dataframe(mocked_jira_client, "some_filter")
+    df = get_tickets_from_jira(mocked_jira_client, "some_filter")
 
     # Then: the dataframe we get above should match the expected result
     expected_df = pd.DataFrame(
