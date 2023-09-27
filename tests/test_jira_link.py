@@ -43,13 +43,20 @@ def test_get_tickets_from_jira(mocked_jira_class):
     mock_issue.key = "TEST-123"
     mock_issue.changelog.histories = [mock_history]
 
+    mock_filter = Mock()
+    mock_filter.name = "some_filter"
+    mock_filter.jql = "MOCKED JQL"
+
     mocked_jira_client = mocked_jira_class.return_value
+    mocked_jira_client.favourite_filters.return_value = [mock_filter]
     mocked_jira_client.search_issues.return_value = [mock_issue]
+
+    source_info_mock = {"jira_filter": "some_filter"}
 
     # When: Execute the behavior under test (note: no need for a real
     # filter, since the mocked_jira_client returns what it does
     # regardless of the filter)
-    df = get_tickets_from_jira(mocked_jira_client, "some_filter")
+    df = get_tickets_from_jira(mocked_jira_client, source_info_mock)
 
     # Then: the dataframe we get above should match the expected result
     expected_df = pd.DataFrame(

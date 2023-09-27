@@ -16,21 +16,23 @@ def get_tickets(source_info):
         return get_tickets_from_mockfile(source_info)
     else:
         jira_client = connect_to_jira(source_info)
-        project_key = source_info["project_key"]
-        return get_tickets_from_jira(
-            jira_client,
-            (
-                f"project = '{project_key}' AND "
-                "issuetype in (Bug, Story, Task) AND "
-                'status changed DURING ("2023/09/11", "2023/09/24")'
-            ),
-        )
+        return get_tickets_from_jira(jira_client, source_info)
 
 
-def get_tickets_from_jira(jira_client, jira_filter):
+def get_tickets_from_jira(jira_client, source_info):
+    filter_name = source_info["jira_filter"]
+    saved_filters = jira_client.favourite_filters()
+    target_filter = next((f for f in saved_filters if f.name == filter_name), None)
+
+    if not target_filter:
+        raise ValueError(f"Jira filter named '{filter_name}' not found.")
+
+    jql_str = target_filter.jql
+
     issues = jira_client.search_issues(
-        jql_str=jira_filter, expand="changelog", maxResults=100
+        jql_str=jql_str, expand="changelog", maxResults=10
     )
+
     ticket_data = []
 
     for issue in issues:
@@ -92,6 +94,7 @@ if __name__ == "__main__":
         "api_token": config.get("JIRA", "API_TOKEN", fallback=None),
         "project_key": config.get("JIRA", "PROJECT_KEY", fallback=None),
         "mock_jira_data": config.get("JIRA", "MOCK_JIRA_DATA", fallback=None),
+        "jira_filter": config.get("JIRA", "JIRA_FILTER", fallback=None),
     }
 
     # connect to a source and get ticket data
