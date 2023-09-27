@@ -12,13 +12,13 @@ def test_connect_to_jira():
         mock_instance = Mock()
         mock_jira.return_value = mock_instance
 
-        source_info = {
+        cfg = {
             "email": "email@example.com",
             "jira_url": "https://jira.example.com",
             "api_token": "api_key_123",
         }
 
-        result = connect_to_jira(source_info)
+        result = connect_to_jira(cfg)
 
         mock_jira.assert_called_once_with(
             {"server": "https://jira.example.com"},
@@ -51,12 +51,12 @@ def test_get_tickets_from_jira(mocked_jira_class):
     mocked_jira_client.favourite_filters.return_value = [mock_filter]
     mocked_jira_client.search_issues.return_value = [mock_issue]
 
-    source_info_mock = {"jira_filter": "some_filter"}
+    cfg_mock = {"jira_filter": "some_filter"}
 
     # When: Execute the behavior under test (note: no need for a real
     # filter, since the mocked_jira_client returns what it does
     # regardless of the filter)
-    df = get_tickets_from_jira(mocked_jira_client, source_info_mock)
+    df = get_tickets_from_jira(mocked_jira_client, cfg_mock)
 
     # Then: the dataframe we get above should match the expected result
     expected_df = pd.DataFrame(

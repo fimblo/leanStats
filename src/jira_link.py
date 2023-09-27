@@ -6,21 +6,21 @@ import os
 import sys
 
 
-def connect_to_jira(source_info):
-    options = {"server": source_info["jira_url"]}
-    return JIRA(options, basic_auth=(source_info["email"], source_info["api_token"]))
+def connect_to_jira(cfg):
+    options = {"server": cfg["jira_url"]}
+    return JIRA(options, basic_auth=(cfg["email"], cfg["api_token"]))
 
 
-def get_tickets(source_info):
-    if source_info["mock_jira_data"]:
-        return get_tickets_from_mockfile(source_info)
+def get_tickets(cfg):
+    if cfg["mock_jira_data"]:
+        return get_tickets_from_mockfile(cfg)
     else:
-        jira_client = connect_to_jira(source_info)
-        return get_tickets_from_jira(jira_client, source_info)
+        jira_client = connect_to_jira(cfg)
+        return get_tickets_from_jira(jira_client, cfg)
 
 
-def get_tickets_from_jira(jira_client, source_info):
-    filter_name = source_info["jira_filter"]
+def get_tickets_from_jira(jira_client, cfg):
+    filter_name = cfg["jira_filter"]
     saved_filters = jira_client.favourite_filters()
     target_filter = next((f for f in saved_filters if f.name == filter_name), None)
 
@@ -52,8 +52,8 @@ def get_tickets_from_jira(jira_client, source_info):
     return pd.DataFrame(ticket_data)
 
 
-def get_tickets_from_mockfile(source_info):
-    mock_datafile = source_info["mock_jira_data"]
+def get_tickets_from_mockfile(cfg):
+    mock_datafile = cfg["mock_jira_data"]
     if not os.path.isfile(mock_datafile):
         print(
             f"The mock jira data file '{mock_datafile}' does not exist or is not readable."
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Get configfile settings
     config = configparser.ConfigParser()
     config.read(args.config_file)
-    source_info = {
+    cfg = {
         "email": config.get("JIRA", "EMAIL", fallback=None),
         "jira_url": config.get("JIRA", "JIRA_URL", fallback=None),
         "api_token": config.get("JIRA", "API_TOKEN", fallback=None),
@@ -99,6 +99,6 @@ if __name__ == "__main__":
 
     # connect to a source and get ticket data
     # source can be: jira or mockfile
-    dataframe = get_tickets(source_info)
+    dataframe = get_tickets(cfg)
 
     print(dataframe.sort_values(by="changed_at").to_string(index=False))
