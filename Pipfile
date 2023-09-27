@@ -23,7 +23,7 @@ test = "pytest tests"
 formatcheck = "black --check src tests"
 formatdiff = "black --diff src tests"
 formatfix =  "black src tests"
-jira = "python src/jira_connector.py"
+jira = "python src/jira_link.py"
 
 [tool]
 pytest = {testpaths = ["tests"]}

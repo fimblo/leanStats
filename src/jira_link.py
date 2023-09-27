@@ -33,7 +33,7 @@ def get_tickets_as_dataframe(jira_client, jira_filter):
 
 
 def print_help():
-    print("jira_connector.py - get ticket details from Jira")
+    print("jira_link.py - get ticket details from Jira")
 
 
 if __name__ == "__main__":
