@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 @pytest.fixture
 def sample_data_time():
-    data = """Key,Status Transition.date,Status Transition.to
+    data = """ticket_id,changed_at,to_status
 TICKET-1,15/09/2023 00:01:00,IN PROGRESS
 TICKET-1,17/09/2023 00:02:00,DONE
 TICKET-2,16/09/2023 00:01:00,IN PROGRESS
@@ -28,7 +28,7 @@ TICKET-2,20/09/2023 00:02:00,DONE
 
 @pytest.fixture
 def sample_data_date():
-    data = """Key,Status Transition.date,Status Transition.to
+    data = """ticket_id,changed_at,to_status
 TICKET-1,15/09/2023,IN PROGRESS
 TICKET-1,17/09/2023,DONE
 TICKET-2,16/09/2023,IN PROGRESS
@@ -38,28 +38,24 @@ TICKET-2,20/09/2023,DONE
 
 
 def test_extract_ticket_datestamps(sample_data_date):
-    data = pd.read_csv(
-        sample_data_date, parse_dates=["Status Transition.date"], dayfirst=True
-    )
+    data = pd.read_csv(sample_data_date, parse_dates=["changed_at"], dayfirst=True)
     df = extract_ticket_timestamps(data)
 
     assert len(df) == 2
-    assert df.iloc[0]["Key"] == "TICKET-1"
+    assert df.iloc[0]["ticket_id"] == "TICKET-1"
     assert df.iloc[0]["timestamp_start"].strftime("%Y-%m-%d") == "2023-09-15"
     assert df.iloc[0]["timestamp_end"].strftime("%Y-%m-%d") == "2023-09-17"
-    assert df.iloc[1]["Key"] == "TICKET-2"
+    assert df.iloc[1]["ticket_id"] == "TICKET-2"
     assert df.iloc[1]["timestamp_start"].strftime("%Y-%m-%d") == "2023-09-16"
     assert df.iloc[1]["timestamp_end"].strftime("%Y-%m-%d") == "2023-09-20"
 
 
 def test_extract_ticket_timestamps(sample_data_time):
-    data = pd.read_csv(
-        sample_data_time, parse_dates=["Status Transition.date"], dayfirst=True
-    )
+    data = pd.read_csv(sample_data_time, parse_dates=["changed_at"], dayfirst=True)
     df = extract_ticket_timestamps(data)
 
     assert len(df) == 2
-    assert df.iloc[0]["Key"] == "TICKET-1"
+    assert df.iloc[0]["ticket_id"] == "TICKET-1"
     assert (
         df.iloc[0]["timestamp_start"].strftime("%Y-%m-%d %H:%M:%S")
         == "2023-09-15 00:01:00"
@@ -68,7 +64,7 @@ def test_extract_ticket_timestamps(sample_data_time):
         df.iloc[0]["timestamp_end"].strftime("%Y-%m-%d %H:%M:%S")
         == "2023-09-17 00:02:00"
     )
-    assert df.iloc[1]["Key"] == "TICKET-2"
+    assert df.iloc[1]["ticket_id"] == "TICKET-2"
     assert (
         df.iloc[1]["timestamp_start"].strftime("%Y-%m-%d %H:%M:%S")
         == "2023-09-16 00:01:00"
@@ -80,9 +76,7 @@ def test_extract_ticket_timestamps(sample_data_time):
 
 
 def test_calculate_cycletime(sample_data_time):
-    data = pd.read_csv(
-        sample_data_time, parse_dates=["Status Transition.date"], dayfirst=True
-    )
+    data = pd.read_csv(sample_data_time, parse_dates=["changed_at"], dayfirst=True)
     df = extract_ticket_timestamps(data)
     df = calculate_cycletime(df)
 
@@ -99,7 +93,7 @@ def test_calculate_cycletime(sample_data_time):
 def test_compute_metrics_per_ticket_basic_functionality():
     # Given: Create a mock dataframe
     data = {
-        "Key": ["A", "B", "C", "D"],
+        "ticket_id": ["A", "B", "C", "D"],
         "timestamp_end": [
             pd.Timestamp("2023-09-15 10:00:00"),
             pd.Timestamp("2023-09-17 10:00:00"),
@@ -121,21 +115,29 @@ def test_compute_metrics_per_ticket_basic_functionality():
     assert "throughput" in result_df.columns
 
     # Check correct calculations for each ticket
-    assert result_df.loc[result_df["Key"] == "A", "median_cycletime"].values[0] == 5
-    assert result_df.loc[result_df["Key"] == "A", "p85_cycletime"].values[0] == 5
-    assert result_df.loc[result_df["Key"] == "A", "throughput"].values[0] == 1
+    assert (
+        result_df.loc[result_df["ticket_id"] == "A", "median_cycletime"].values[0] == 5
+    )
+    assert result_df.loc[result_df["ticket_id"] == "A", "p85_cycletime"].values[0] == 5
+    assert result_df.loc[result_df["ticket_id"] == "A", "throughput"].values[0] == 1
 
-    assert result_df.loc[result_df["Key"] == "B", "median_cycletime"].values[0] == 4
-    assert result_df.loc[result_df["Key"] == "B", "p85_cycletime"].values[0] == 5
-    assert result_df.loc[result_df["Key"] == "B", "throughput"].values[0] == 2
+    assert (
+        result_df.loc[result_df["ticket_id"] == "B", "median_cycletime"].values[0] == 4
+    )
+    assert result_df.loc[result_df["ticket_id"] == "B", "p85_cycletime"].values[0] == 5
+    assert result_df.loc[result_df["ticket_id"] == "B", "throughput"].values[0] == 2
 
-    assert result_df.loc[result_df["Key"] == "C", "median_cycletime"].values[0] == 4
-    assert result_df.loc[result_df["Key"] == "C", "p85_cycletime"].values[0] == 5
-    assert result_df.loc[result_df["Key"] == "C", "throughput"].values[0] == 3
+    assert (
+        result_df.loc[result_df["ticket_id"] == "C", "median_cycletime"].values[0] == 4
+    )
+    assert result_df.loc[result_df["ticket_id"] == "C", "p85_cycletime"].values[0] == 5
+    assert result_df.loc[result_df["ticket_id"] == "C", "throughput"].values[0] == 3
 
-    assert result_df.loc[result_df["Key"] == "D", "median_cycletime"].values[0] == 4
-    assert result_df.loc[result_df["Key"] == "D", "p85_cycletime"].values[0] == 5
-    assert result_df.loc[result_df["Key"] == "D", "throughput"].values[0] == 4
+    assert (
+        result_df.loc[result_df["ticket_id"] == "D", "median_cycletime"].values[0] == 4
+    )
+    assert result_df.loc[result_df["ticket_id"] == "D", "p85_cycletime"].values[0] == 5
+    assert result_df.loc[result_df["ticket_id"] == "D", "throughput"].values[0] == 4
 
 
 def test_compute_metrics_per_week_basic_input():
@@ -143,7 +145,7 @@ def test_compute_metrics_per_week_basic_input():
     data = {
         "timestamp_end": ["2023-01-01", "2023-01-03", "2023-01-05"],
         "cycletime": [5, 7, 6],
-        "Key": [1, 2, 3],
+        "ticket_id": [1, 2, 3],
     }
     df = pd.DataFrame(data)
     df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])
@@ -161,7 +163,7 @@ def test_compute_metrics_per_week_fill_missing_week():
     data = {
         "timestamp_end": ["2023-01-01", "2023-01-15"],
         "cycletime": [5, 7],
-        "Key": [1, 2],
+        "ticket_id": [1, 2],
     }
     df = pd.DataFrame(data)
     df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])
@@ -202,7 +204,7 @@ def test_compute_metrics_per_week_expected_columns():
     data = {
         "timestamp_end": ["2023-01-01", "2023-01-03"],
         "cycletime": [5, 6],
-        "Key": [1, 2],
+        "ticket_id": [1, 2],
     }
     df = pd.DataFrame(data)
     df["timestamp_end"] = pd.to_datetime(df["timestamp_end"])

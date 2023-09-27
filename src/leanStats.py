@@ -13,22 +13,22 @@ import os
 def extract_ticket_timestamps(dataframe_in):
     # filter when tickets moved to IN PROGRESS
     in_progress = (
-        dataframe_in[dataframe_in["Status Transition.to"].str.upper() == "IN PROGRESS"]
-        .groupby("Key")
-        .agg({"Status Transition.date": "min"})
-        .rename(columns={"Status Transition.date": "timestamp_start"})
+        dataframe_in[dataframe_in["to_status"].str.upper() == "IN PROGRESS"]
+        .groupby("ticket_id")
+        .agg({"changed_at": "min"})
+        .rename(columns={"changed_at": "timestamp_start"})
     )
 
     # filter when tickets moved to DONE
     done = (
-        dataframe_in[dataframe_in["Status Transition.to"].str.upper() == "DONE"]
-        .groupby("Key")
-        .agg({"Status Transition.date": "max"})
-        .rename(columns={"Status Transition.date": "timestamp_end"})
+        dataframe_in[dataframe_in["to_status"].str.upper() == "DONE"]
+        .groupby("ticket_id")
+        .agg({"changed_at": "max"})
+        .rename(columns={"changed_at": "timestamp_end"})
     )
 
     # left join on key.
-    return in_progress.join(done, on="Key").reset_index()
+    return in_progress.join(done, on="ticket_id").reset_index()
 
 
 def calculate_cycletime(dataframe):
@@ -87,7 +87,7 @@ def compute_metrics_per_week(dataframe):
                     lambda x: np.ceil(x.quantile(0.5)),
                     lambda x: np.ceil(x.quantile(0.85)),
                 ],
-                "Key": "count",  # throughput
+                "ticket_id": "count",  # throughput
             }
         )
         .reset_index()
@@ -189,7 +189,7 @@ def main():
 
     # read in data and calculate cycletime
     data = pd.read_csv(
-        file_path, parse_dates=["Status Transition.date"], dayfirst=True
+        file_path, parse_dates=["changed_at"], dayfirst=True
     )  # dd/mm/yy madness
     dataframe = extract_ticket_timestamps(data)
     dataframe = calculate_cycletime(dataframe)
