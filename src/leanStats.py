@@ -4,24 +4,30 @@ import argparse
 import configparser
 import pandas as pd
 import numpy as np
+import re
 
-from pprint import pprint
 import sys
 import os
 
 
-def extract_ticket_timestamps(dataframe_in):
-    # filter when tickets moved to IN PROGRESS
+def extract_ticket_timestamps(dataframe_in, cfg):
+    # Filter when tickets moved to any WIP state
     in_progress = (
-        dataframe_in[dataframe_in["to_status"].str.upper() == "IN PROGRESS"]
+        dataframe_in[
+            dataframe_in["to_status"].str.upper().isin(map(str.upper, cfg["wip_names"]))
+        ]
         .groupby("ticket_id")
         .agg({"changed_at": "min"})
         .rename(columns={"changed_at": "timestamp_start"})
     )
 
-    # filter when tickets moved to DONE
+    # Filter when tickets moved to any DONE state
     done = (
-        dataframe_in[dataframe_in["to_status"].str.upper() == "DONE"]
+        dataframe_in[
+            dataframe_in["to_status"]
+            .str.upper()
+            .isin(map(str.upper, cfg["done_names"]))
+        ]
         .groupby("ticket_id")
         .agg({"changed_at": "max"})
         .rename(columns={"changed_at": "timestamp_end"})
@@ -164,6 +170,20 @@ def main():
     config.read(args.config_file)
 
     file_path = config.get("SYSTEM", "input_csv_file", fallback=None)
+    cfg = {
+        "todo_names": re.split(
+            r"\s*,\s*",
+            config.get("BOARD", "TODO", fallback="Todo"),
+        ),
+        "wip_names": re.split(
+            r"\s*,\s*",
+            config.get("BOARD", "WIP", fallback="Doing"),
+        ),
+        "done_names": re.split(
+            r"\s*,\s*",
+            config.get("BOARD", "DONE", fallback="Done"),
+        ),
+    }
 
     # Sanity checks
     if not os.path.isfile(file_path):
@@ -174,7 +194,7 @@ def main():
     data = pd.read_csv(
         file_path, parse_dates=["changed_at"], dayfirst=True
     )  # dd/mm/yy madness
-    dataframe = extract_ticket_timestamps(data)
+    dataframe = extract_ticket_timestamps(data, cfg)
     dataframe = calculate_cycletime(dataframe)
 
     # get per-ticket metrics
