@@ -138,7 +138,7 @@ def test_compute_metrics_per_ticket_basic_functionality():
     assert result_df.loc[result_df["Key"] == "D", "throughput"].values[0] == 4
 
 
-def test_basic_input():
+def test_compute_metrics_per_week_basic_input():
     # Given: A basic input DataFrame
     data = {
         "timestamp_end": ["2023-01-01", "2023-01-03", "2023-01-05"],
@@ -156,7 +156,7 @@ def test_basic_input():
     assert list(result.itertuples(index=False, name=None)) == expected
 
 
-def test_fill_missing_week():
+def test_compute_metrics_per_week_fill_missing_week():
     # Given: Input data with a gap week
     data = {
         "timestamp_end": ["2023-01-01", "2023-01-15"],
@@ -197,7 +197,7 @@ def test_fill_missing_week():
     assert result.equals(expected_df)
 
 
-def test_expected_columns():
+def test_compute_metrics_per_week_expected_columns():
     # Given: Any DataFrame
     data = {
         "timestamp_end": ["2023-01-01", "2023-01-03"],
