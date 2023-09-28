@@ -11,7 +11,28 @@ import sys
 import os
 
 
+def check_statuses_defined(dataframe_in, cfg):
+    defined_statuses = set(
+        status.upper()
+        for group in ["todo_names", "wip_names", "done_names"]
+        for status in cfg[group]
+    )
+
+    # Get unique statuses, and check if there are any which are not
+    # defined in the config file
+    all_statuses = set(dataframe_in["to_status"].str.upper().unique())
+    undefined_statuses = all_statuses - defined_statuses
+
+    if undefined_statuses:
+        raise ValueError(
+            f"The following statuses are not defined in the configuration: {', '.join(undefined_statuses)}"
+        )
+
+
 def extract_ticket_timestamps(dataframe_in, cfg):
+    # Find any statuses which might not be defined
+    check_statuses_defined(dataframe_in, cfg)
+
     # Filter when tickets moved to any WIP state
     in_progress = (
         dataframe_in[
@@ -203,7 +224,13 @@ def main():
     data = pd.read_csv(file_path, dtype={"changed_at": str})
     data["changed_at"] = data["changed_at"].apply(custom_date_parser)
 
-    dataframe = extract_ticket_timestamps(data, cfg)
+    dataframe = None
+    try:
+        dataframe = extract_ticket_timestamps(data, cfg)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
     dataframe = calculate_cycletime(dataframe)
 
     # get per-ticket metrics

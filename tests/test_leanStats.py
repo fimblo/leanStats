@@ -10,6 +10,7 @@ from leanStats import (
     calculate_cycletime,
     compute_metrics_per_ticket,
     compute_metrics_per_week,
+    check_statuses_defined,
 )
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -235,3 +236,48 @@ def test_compute_metrics_per_week_expected_columns():
         "cycletime_p85",
         "throughput",
     ]
+
+
+def test_check_statuses_defined_undefined_statuses():
+    """
+    This test ensures that the check_statuses_defined function
+    identifies and raises an exception for any status that is
+    not defined in the configuration.
+    Useful for: Ensuring that all statuses in the dataframe are
+    expected and accounted for in the configuration.
+    """
+    # Given: A dataframe with some statuses and a configuration that does not account for all of them
+    data = {"to_status": ["Backlog", "In Progress", "Done", "UndefinedStatus"]}
+    dataframe = pd.DataFrame(data)
+    cfg = {
+        "todo_names": ["Backlog", "To Do"],
+        "wip_names": ["In Progress", "Review & QA"],
+        "done_names": ["Done"],
+    }
+
+    # When: We check the dataframe against the configuration
+    # Then: An exception should be raised for the undefined status
+    with pytest.raises(ValueError, match=r"(?i)UndefinedStatus"):
+        check_statuses_defined(dataframe, cfg)
+
+
+def test_check_statuses_defined_all_defined():
+    """
+    This test ensures that the check_statuses_defined function
+    does not raise any exceptions when all statuses in the dataframe
+    are defined in the configuration.
+    Useful for: Validating that our function does not falsely flag
+    valid configurations.
+    """
+    # Given: A dataframe with some statuses and a configuration that accounts for all of them
+    data = {"to_status": ["Backlog", "In Progress", "Done"]}
+    dataframe = pd.DataFrame(data)
+    cfg = {
+        "todo_names": ["Backlog", "To Do"],
+        "wip_names": ["In Progress", "Review & QA"],
+        "done_names": ["Done"],
+    }
+
+    # When: We check the dataframe against the configuration
+    # Then: No exception should be raised
+    check_statuses_defined(dataframe, cfg)
