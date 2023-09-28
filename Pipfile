@@ -20,6 +20,7 @@ python_version = "3.10"
 [scripts]
 start_stats = "python src/leanStats.py"
 start_jira = "python src/jira_link.py"
+start_jirastats = "python src/analyse_jira_data.py"
 test = "pytest tests"
 formatcheck = "black --check src tests"
 formatdiff = "black --diff src tests"
