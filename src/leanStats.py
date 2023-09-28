@@ -18,10 +18,16 @@ def check_statuses_defined(dataframe_in, cfg):
         for status in cfg[group]
     )
 
+    # get statuses we want to ignore
+    ignored_statuses = set(status.upper() for status in cfg.get("ignore_names", []))
+
     # Get unique statuses, and check if there are any which are not
     # defined in the config file
     all_statuses = set(dataframe_in["to_status"].str.upper().unique())
     undefined_statuses = all_statuses - defined_statuses
+
+    # Now remove the known ignored statuses from the list of undefineds
+    undefined_statuses = undefined_statuses - ignored_statuses
 
     if undefined_statuses:
         raise ValueError(
@@ -204,6 +210,10 @@ def main():
         "done_names": re.split(
             r"\s*,\s*",
             config.get("BOARD", "DONE", fallback="Done"),
+        ),
+        "ignore_names": re.split(
+            r"\s*,\s*",
+            config.get("BOARD", "IGNORE", fallback=""),
         ),
     }
 

@@ -281,3 +281,59 @@ def test_check_statuses_defined_all_defined():
     # When: We check the dataframe against the configuration
     # Then: No exception should be raised
     check_statuses_defined(dataframe, cfg)
+
+
+def test_check_statuses_defined_ignore_statuses():
+    """
+    Tests if the function check_statuses_defined() successfully ignores
+    statuses that are specified to be ignored in the configuration.
+    This test ensures that statuses marked as "ignored" do not cause an exception
+    even if they're not listed under the standard status types.
+    """
+    # Given: Sample data with a status that is meant to be ignored
+    data = {"to_status": ["Backlog", "In Progress", "Done", "IgnoredStatus"]}
+    dataframe = pd.DataFrame(data)
+
+    # Configuration with an ignored status
+    cfg = {
+        "todo_names": ["Backlog", "To Do"],
+        "wip_names": ["In Progress", "Review & QA"],
+        "done_names": ["Done"],
+        "ignore_names": ["IgnoredStatus"],
+    }
+
+    # When: we check for undefined statuses
+    # Then: This should not raise any exception since the "IgnoredStatus" is defined in the ignore_names
+    check_statuses_defined(dataframe, cfg)
+
+
+def test_check_statuses_defined_undefined_and_ignored_statuses():
+    """
+    Tests if the function check_statuses_defined() raises an exception
+    for statuses that are neither in the defined list nor in the ignored list.
+    This test is essential to make sure that any status not explicitly handled is caught.
+    """
+    # Given: Sample data with a truly undefined status
+    data = {
+        "to_status": [
+            "Backlog",
+            "In Progress",
+            "Done",
+            "IgnoredStatus",
+            "ReallyUndefined",
+        ]
+    }
+    dataframe = pd.DataFrame(data)
+
+    # Configuration with an ignored status
+    cfg = {
+        "todo_names": ["Backlog", "To Do"],
+        "wip_names": ["In Progress", "Review & QA"],
+        "done_names": ["Done"],
+        "ignore_names": ["IgnoredStatus"],
+    }
+
+    # When: we check for undefined statuses
+    # Then: It should raise an exception mentioning the truly undefined status
+    with pytest.raises(ValueError, match=r"(?i)ReallyUndefined"):
+        check_statuses_defined(dataframe, cfg)
