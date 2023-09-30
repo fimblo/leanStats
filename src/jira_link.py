@@ -29,12 +29,24 @@ def get_tickets_from_jira(jira_client, cfg):
 
     jql_str = target_filter.jql
 
-    issues = jira_client.search_issues(
-        jql_str=jql_str, expand="changelog", maxResults=10
-    )
+    start_at = 0
+    max_results = 100
+    issues = []
+
+    while True:
+        chunk = jira_client.search_issues(
+            jql_str=jql_str, expand="changelog", startAt=start_at, maxResults=max_results
+        )
+
+        if len(chunk) == 0:
+            # No more issues to retrieve
+            break
+
+        issues.extend(chunk)
+        start_at += max_results
+
 
     ticket_data = []
-
     for issue in issues:
         changelog = issue.changelog
         for history in changelog.histories:
